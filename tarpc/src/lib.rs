@@ -341,7 +341,6 @@ pub enum ClientMessage<T> {
 
 /// A request from a client to a server.
 #[derive(Clone, Copy, Debug)]
-#[non_exhaustive]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Request<T> {
     /// Trace context, deadline, and other cross-cutting concerns.

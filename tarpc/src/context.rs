@@ -31,6 +31,9 @@ pub struct Context {
     // Serialized as a Duration to prevent clock skew issues.
     #[cfg_attr(feature = "serde1", serde(with = "absolute_to_relative_time"))]
     pub deadline: SystemTime,
+
+    /// A client might not care about response at all, in this case server must discard reponse object
+    pub discard_response: bool,
     /// Uniquely identifies requests originating from the same source.
     /// When a service handles a request by making requests itself, those requests should
     /// include the same `trace_id` as that included on the original request. This way,
@@ -113,6 +116,7 @@ impl Context {
         Self {
             trace_context: trace::Context::try_from(&span)
                 .unwrap_or_else(|_| trace::Context::default()),
+            discard_response: false,
             deadline: span
                 .context()
                 .get::<Deadline>()

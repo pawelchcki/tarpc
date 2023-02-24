@@ -739,13 +739,18 @@ impl<Req, Res> InFlightRequest<Req, Res> {
             async move {
                 tracing::info!("BeginRequest");
                 let response = serve.serve(context, message).await;
+
                 tracing::info!("CompleteRequest");
-                let response = Response {
-                    request_id,
-                    message: Ok(response),
-                };
-                let _ = response_tx.send(response).await;
-                tracing::info!("BufferResponse");
+                if context.discard_response {
+                    tracing::info!("DiscardingResponse");
+                } else {
+                    let response = Response {
+                        request_id,
+                        message: Ok(response),
+                    };
+                    let _ = response_tx.send(response).await;
+                    tracing::info!("BufferResponse");
+                }
             },
             abort_registration,
         )

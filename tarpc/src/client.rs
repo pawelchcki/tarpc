@@ -520,6 +520,7 @@ where
             message: request,
             context: context::Context {
                 deadline: ctx.deadline,
+                discard_response: false,
                 trace_context: ctx.trace_context,
             },
         });

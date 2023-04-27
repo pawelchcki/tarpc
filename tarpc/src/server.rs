@@ -8,9 +8,11 @@
 
 use crate::{
     cancellations::{cancellations, CanceledRequests, RequestCancellation},
-    context::{self, SpanExt},
+    context::{self},
     trace, ClientMessage, Request, Response, Transport,
 };
+#[cfg(feature = "opentelemetry")]
+use crate::context::SpanExt;
 use ::tokio::sync::mpsc;
 use futures::{
     future::{AbortRegistration, Abortable},
@@ -180,6 +182,7 @@ where
             otel.kind = "server",
             otel.name = tracing::field::Empty,
         );
+        #[cfg(feature = "opentelemetry")]
         span.set_context(&request.context);
         request.context.trace_context = trace::Context::try_from(&span).unwrap_or_else(|_| {
             tracing::trace!(

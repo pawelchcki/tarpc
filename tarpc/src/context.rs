@@ -8,12 +8,14 @@
 //! client to server and is used by the server to enforce response deadlines.
 
 use crate::trace::{self, TraceId};
+#[cfg(feature = "opentelemetry")]
 use opentelemetry::trace::TraceContextExt;
 use static_assertions::assert_impl_all;
 use std::{
     convert::TryFrom,
     time::{Duration, SystemTime},
 };
+#[cfg(feature = "opentelemetry")]
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 /// A request context that carries request-scoped information like deadlines and trace information.
@@ -111,6 +113,7 @@ impl Default for Deadline {
 
 impl Context {
     /// Returns the context for the current request, or a default Context if no request is active.
+    #[cfg(feature = "opentelemetry")]
     pub fn current() -> Self {
         let span = tracing::Span::current();
         Self {
@@ -123,6 +126,17 @@ impl Context {
                 .cloned()
                 .unwrap_or_default()
                 .0,
+        }
+    }
+    /// Returns the context for the current request, or a default Context if no request is active.
+    #[cfg(not(feature = "opentelemetry"))]
+    pub fn current() -> Self {
+        let span = tracing::Span::current();
+        Self {
+            trace_context: trace::Context::try_from(&span)
+                .unwrap_or_else(|_| trace::Context::default()),
+            discard_response: false,
+            deadline: Deadline::default().0
         }
     }
 
@@ -139,6 +153,7 @@ pub(crate) trait SpanExt {
     fn set_context(&self, context: &Context);
 }
 
+#[cfg(feature = "opentelemetry")]
 impl SpanExt for tracing::Span {
     fn set_context(&self, context: &Context) {
         self.set_parent(
